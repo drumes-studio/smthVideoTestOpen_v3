@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>video</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        body {
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+        body::-webkit-scrollbar {
+            width: 0;
+        }
+        video {
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <video src="./video.mp4" id="animation" muted></video>
+    <div id="crutch"></div>
+    <script>
+        const animation = document.getElementById('animation')
+        const height = document.getElementById('crutch')
+        const breakpoints = []
+        const breakpointsLength = 20
+
+        let count = 0
+
+        function playAnimation(event)
+        {
+            if (count == breakpointsLength || event.deltaY / Math.abs(event.deltaY) < 0)
+                return null
+            animation.play()
+            
+            scrollTo({
+                top: (count + 1) * height.clientHeight / breakpointsLength,
+                behavior: 'smooth'
+            })
+            function checkTime()
+            {
+                if(animation.currentTime >= breakpoints[count])
+                {
+                    animation.pause()
+                    count++
+                    return null
+                }
+                setTimeout(checkTime, 40)
+            }
+            checkTime()
+        }
+
+        animation.addEventListener('loadedmetadata', function() {
+            // Даём свойства при загрузке данных, CSS иногда подводит
+            this.style.position = "fixed"
+            this.style.top = this.style.left = 0
+            this.height = window.innerHeight
+            this.width = window.innerWidth
+            // Изначально ставим видео на паузу
+            this.pause()
+            // Создаём n брейкпойнтов для анимации
+            for(let i = 0; i < breakpointsLength; i++)
+                breakpoints.push((i + 1) * animation.duration / breakpointsLength)
+            // Даём странице полвысоты экрана пользователя на каждый брейкпоинт
+            height.style.height = 20 * breakpointsLength + "vh"
+            // Регулируем событие изменения масштаба
+            window.addEventListener('resize', function() {
+                animation.height = window.innerHeight
+                animation.width = window.innerWidth
+            })
+            window.addEventListener('wheel', playAnimation)
+            window.addEventListener('touchmove', playAnimation)
+        })
+        
+        window.onbeforeunload = function() {
+            scrollTo({top: 0, behavior: 'instant'})
+        }
+    </script>
+</body>
+</html>
